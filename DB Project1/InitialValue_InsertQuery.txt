@@ -1,0 +1,51 @@
+--Director initial data input
+INSERT INTO Director(Director_name,DOB,DOD)
+	VALUES('Tim Burton','1958-08-25',NULL);
+INSERT INTO Director(Director_name,DOB,DOD)
+	VALUES('David Fincher','1962-08-28',NULL);
+INSERT INTO Director(Director_name,DOB,DOD)
+	VALUES('Christoper Nolan','1970-07-30',NULL);
+
+--customer initial data input
+INSERT INTO Customer(Customer_name,DOB,Gender)
+	VALUES('Ethan','1997-11-14','MALE');
+INSERT INTO Customer(Customer_name,DOB,Gender)
+	VALUES('John','1978-01-23','MALE');
+INSERT INTO Customer(Customer_name,DOB,Gender)
+	VALUES('Hayden','1980-05-04','FEMALE');
+INSERT INTO Customer(Customer_name,DOB,Gender)
+	VALUES('Jill','1980-05-04','FEMALE');
+INSERT INTO Customer(Customer_name,DOB,Gender)
+	VALUES('Bell','1990-05-14','FEMALE');
+
+--Actor initial data input
+INSERT INTO Actor(Actor_name,DOB,DOD,Gender)
+	VALUES('Johnny Depp','1963-06-09', NULL, 'MALE');
+INSERT INTO Actor(Actor_name,DOB,DOD,Gender)
+	VALUES('Winona Ryder','1971-10-29', NULL, 'FEMALE');
+INSERT INTO Actor(Actor_name,DOB,DOD,Gender)
+	VALUES('Mia Wasikowska','1989-10-14', NULL, 'FEMALE');
+INSERT INTO Actor(Actor_name,DOB,DOD,Gender)
+	VALUES('Christian Bale','1974-01-30', NULL, 'MALE');
+INSERT INTO Actor(Actor_name,DOB,DOD,Gender)
+	VALUES('Heath Ledger','1979-04-04', '2008-01-22', 'MALE');
+INSERT INTO Actor(Actor_name,DOB,DOD,Gender)
+	VALUES('Jesse Eisenberg','1983-10-05', NULL, 'MALE');
+INSERT INTO Actor(Actor_name,DOB,DOD,Gender)
+	VALUES('Justin Timberlake','1981-01-31', NULL, 'MALE');
+INSERT INTO Actor(Actor_name,DOB,DOD,Gender)
+	VALUES('Fionn Whitehead','1997-07-18', NULL, 'MALE');
+INSERT INTO Actor(Actor_name,DOB,DOD,Gender)
+	VALUES('Tom Hardy','1977-09-15', NULL, 'MALE');
+
+--Movie initial data input
+INSERT INTO Movie(Movie_name,Director_ID,Publisher,Relate_date)
+	VALUES('Edward Scissorhands',1,'20th Century Fox Present','1991-06-29');
+INSERT INTO Movie(Movie_name,Director_ID,Publisher,Relate_date)
+	VALUES('Alice In Wonserland',1,'Korea Sony Pictures','2010-03-04');
+INSERT INTO Movie(Movie_name,Director_ID,Publisher,Relate_date)
+	VALUES('The Social Network',2,'Korea Sony Pictures','2010-11-18');
+INSERT INTO Movie(Movie_name,Director_ID,Publisher,Relate_date)
+	VALUES('The Dark Knight',3,'Warner Brothers Korea','2008-08-06');
+INSERT INTO Movie(Movie_name,Director_ID,Publisher,Relate_date)
+	VALUES('Dunkirk',3,'Warner Brothers Korea','2017-07-13');

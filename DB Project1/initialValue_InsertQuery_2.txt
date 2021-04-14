@@ -1,0 +1,111 @@
+--Award initial value input
+-- Best Supporting Actor - 1, Best Villain Actor-2, Best Main Actor-3, Best Fantasy Movie-4, Best Picture-5, Best Director-6
+INSERT INTO Award(Award_name)
+	VALUES('Best Supporting Actor');
+INSERT INTO Award(Award_name)
+	VALUES('Best Villian Actor');
+INSERT INTO Award(Award_name)
+	VALUES('Best Main Actor');
+INSERT INTO Award(Award_name)
+	VALUES('Best Fantasy Movie');
+INSERT INTO Award(Award_name)
+	VALUES('Best Picture');
+INSERT INTO Award(Award_name)
+	VALUES('Best Director');
+
+--Movie_Actor initial value input
+-- Edward Scissorhand, Jonny Depp
+INSERT INTO Movie_Actor(Movie, Actor, acting_role)
+	VALUES(1,1,'Main actor');
+-- Edward Scissorhand, Winona Ryder
+INSERT INTO Movie_Actor(Movie, Actor, acting_role)
+	VALUES(1,2,'Main actor');
+-- Alice in Wonderland, Jonny Depp
+INSERT INTO Movie_Actor(Movie, Actor, acting_role)
+	VALUES(2,1,'Main actor');
+-- Alice in Wonderland, Mia Wasikowska
+INSERT INTO Movie_Actor(Movie, Actor, acting_role)
+	VALUES(2,3,'Main actor');
+--The Social Network, Jesse Eisenberg
+INSERT INTO Movie_Actor(Movie, Actor, acting_role)
+	VALUES(3,6,'Main actor');
+--The Social Network, Justin Timberlake
+INSERT INTO Movie_Actor(Movie, Actor, acting_role)
+	VALUES(3,7,'Supporting actor');
+--The Dark Knight, Chrstian Bale
+INSERT INTO Movie_Actor(Movie, Actor, acting_role)
+	VALUES(4,4,'Main actor');
+--The Dark Knight, Heath Ledger
+INSERT INTO Movie_Actor(Movie, Actor, acting_role)
+	VALUES(4,5,'Main actor');
+--Dunkirk, Fionn Whitehead
+INSERT INTO Movie_Actor(Movie, Actor, acting_role)
+	VALUES(5,8,'Main actor');
+--Dinkirk, Tom Hardy
+INSERT INTO Movie_Actor(Movie, Actor, acting_role)
+	VALUES(5,9,'Supporting Actor');
+
+
+-- Genre initial value input
+-- Fantasy - 1, Romance - 2, Adventure - 3, Family - 4, Drama - 5, Action - 6, Mystery - 7, Thriller - 8, War - 9
+INSERT INTO Genre(Genre_name)
+	VALUES('Fantasy');
+INSERT INTO Genre(Genre_name)
+	VALUES('Romance');
+INSERT INTO Genre(Genre_name)
+	VALUES('Adventure');
+INSERT INTO Genre(Genre_name)
+	VALUES('Family');
+INSERT INTO Genre(Genre_name)
+	VALUES('Drama');
+INSERT INTO Genre(Genre_name)
+	VALUES('Action');
+INSERT INTO Genre(Genre_name)
+	VALUES('Mystery');
+INSERT INTO Genre(Genre_name)
+	VALUES('Thriller');
+INSERT INTO Genre(Genre_name)
+	VALUES('War');
+
+--Movie_Genre initail Value input
+--Edward Scissorhand ,Fantasy, Romance
+INSERT INTO Movie_Genre
+	Values(1, 1);
+INSERT INTO Movie_Genre
+	Values(1, 2);
+
+--Alice in Wonderland, Fantasy, Adventure, Family
+INSERT INTO Movie_Genre
+	Values(2, 1);
+INSERT INTO Movie_Genre
+	Values(2, 3);
+INSERT INTO Movie_Genre
+	Values(2, 4);
+
+--The Social Network, Drama
+INSERT INTO Movie_Genre
+	Values(3, 5);
+
+--The Dark Knight, Action, Drama, Mystery, Thriller
+INSERT INTO Movie_Genre
+	Values(4, 6);
+INSERT INTO Movie_Genre
+	Values(4, 5);
+INSERT INTO Movie_Genre
+	Values(4, 7);
+INSERT INTO Movie_Genre
+	Values(4, 8);
+
+--Dunkirk, Action, Drama, Thriller, War
+INSERT INTO Movie_Genre
+	Values(5, 6);
+INSERT INTO Movie_Genre
+	Values(5, 5);
+INSERT INTO Movie_Genre
+	Values(5, 8);
+INSERT INTO Movie_Genre
+	Values(5, 9);
+
+
+
+

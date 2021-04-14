@@ -1,0 +1,181 @@
+﻿
+-- Director Table Create SQL
+CREATE TABLE Director
+(
+    Director_ID      serial         NOT NULL, 
+    Director_name    varchar(50)    NULL, 
+    DOB              date           NULL, 
+    DOD              date           NULL, 
+    PRIMARY KEY (Director_ID)
+);
+
+
+-- Movie Table Create SQL
+CREATE TABLE Movie
+(
+    Movie_ID       serial         NOT NULL, 
+    Movie_name     varchar(50)    NULL, 
+    Director_ID    int            NULL, 
+    Publisher      varchar(50)    NULL, 
+    Relate_date    date           NULL, 
+    PRIMARY KEY (Movie_ID)
+);
+
+ALTER TABLE Movie
+    ADD CONSTRAINT FK_Movie_Director_ID_Director_Director_ID FOREIGN KEY (Director_ID)
+        REFERENCES Director (Director_ID)
+;
+
+
+-- Award Table Create SQL
+CREATE TABLE Award
+(
+    Award_ID      serial         NOT NULL, 
+    Award_name    varchar(50)    NULL, 
+    PRIMARY KEY (Award_ID)
+);
+
+
+-- Actor Table Create SQL
+CREATE TABLE Actor
+(
+    Actor_ID      serial         NOT NULL, 
+    Actor_name    varchar(50)    NULL, 
+    DOB           date           NULL, 
+    DOD           date           NULL, 
+    Gender        varchar(6)     NULL, 
+    PRIMARY KEY (Actor_ID)
+);
+
+
+-- Genre Table Create SQL
+CREATE TABLE Genre
+(
+    Genre_ID      serial         NOT NULL, 
+    Genre_name    varchar(50)    NULL, 
+    PRIMARY KEY (Genre_ID)
+);
+
+
+-- Customer Table Create SQL
+CREATE TABLE Customer
+(
+    Customer_ID      serial         NOT NULL, 
+    Customer_name    varchar(50)    NULL, 
+    DOB              date           NULL, 
+    Gender           varchar(6)     NULL, 
+    PRIMARY KEY (Customer_ID)
+);
+
+
+-- Movie_Actor Table Create SQL
+CREATE TABLE Movie_Actor
+(
+    Movie          int            NULL, 
+    Actor          int            NULL, 
+    acting_role    varchar(20)    NULL 
+);
+
+ALTER TABLE Movie_Actor
+    ADD CONSTRAINT FK_Movie_Actor_Movie_Movie_Movie_ID FOREIGN KEY (Movie)
+        REFERENCES Movie (Movie_ID)
+;
+
+ALTER TABLE Movie_Actor
+    ADD CONSTRAINT FK_Movie_Actor_Actor_Actor_Actor_ID FOREIGN KEY (Actor)
+        REFERENCES Actor (Actor_ID)
+;
+
+
+-- Movie_Genre Table Create SQL
+CREATE TABLE Movie_Genre
+(
+    Movie    int    NULL, 
+    Genre    int    NULL   
+);
+
+ALTER TABLE Movie_Genre
+    ADD CONSTRAINT FK_Movie_Genre_Movie_Movie_Movie_ID FOREIGN KEY (Movie)
+        REFERENCES Movie (Movie_ID)
+;
+
+ALTER TABLE Movie_Genre
+    ADD CONSTRAINT FK_Movie_Genre_Genre_Genre_Genre_ID FOREIGN KEY (Genre)
+        REFERENCES Genre (Genre_ID)
+;
+
+
+-- Director_Award Table Create SQL
+CREATE TABLE Director_Award
+(
+    Director_ID    int     NULL, 
+    Award_ID       int     NULL, 
+    Given_date     date    NULL   
+);
+
+ALTER TABLE Director_Award
+    ADD CONSTRAINT FK_Director_Award_Director_ID_Director_Director_ID FOREIGN KEY (Director_ID)
+        REFERENCES Director (Director_ID)
+;
+
+ALTER TABLE Director_Award
+    ADD CONSTRAINT FK_Director_Award_Award_ID_Award_Award_ID FOREIGN KEY (Award_ID)
+        REFERENCES Award (Award_ID)
+;
+
+
+-- Actor_Award Table Create SQL
+CREATE TABLE Actor_Award
+(
+    Actor_ID      int     NULL, 
+    Award_ID      int     NULL, 
+    Given_date    date    NULL   
+);
+
+ALTER TABLE Actor_Award
+    ADD CONSTRAINT FK_Actor_Award_Award_ID_Award_Award_ID FOREIGN KEY (Award_ID)
+        REFERENCES Award (Award_ID)
+;
+
+ALTER TABLE Actor_Award
+    ADD CONSTRAINT FK_Actor_Award_Actor_ID_Actor_Actor_ID FOREIGN KEY (Actor_ID)
+        REFERENCES Actor (Actor_ID)
+;
+
+
+-- Movie_Award Table Create SQL
+CREATE TABLE Movie_Award
+(
+    Movie_ID      int     NULL, 
+    Award_ID      int     NULL, 
+    Given_date    date    NULL   
+);
+
+ALTER TABLE Movie_Award
+    ADD CONSTRAINT FK_Movie_Award_Award_ID_Award_Award_ID FOREIGN KEY (Award_ID)
+        REFERENCES Award (Award_ID)
+;
+
+ALTER TABLE Movie_Award
+    ADD CONSTRAINT FK_Movie_Award_Movie_ID_Movie_Movie_ID FOREIGN KEY (Movie_ID)
+        REFERENCES Movie (Movie_ID)
+;
+
+
+-- Customer_rate Table Create SQL
+CREATE TABLE CUSTOMER_RATE
+(
+    Customer_ID    int    NULL, 
+    Movie_ID       int    NULL, 
+    Rate           int    NULL   
+);
+
+ALTER TABLE CUSTOMER_RATE
+    ADD CONSTRAINT FK_CUSTOMER_RATE_Customer_ID_Customer_Customer_ID FOREIGN KEY (Customer_ID)
+        REFERENCES Customer (Customer_ID)
+;
+
+ALTER TABLE CUSTOMER_RATE
+    ADD CONSTRAINT FK_CUSTOMER_RATE_Movie_ID_Movie_Movie_ID FOREIGN KEY (Movie_ID)
+        REFERENCES Movie (Movie_ID)
+;

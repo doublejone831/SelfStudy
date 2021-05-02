@@ -95,4 +95,15 @@ Award data까지 입력 완료. 여기까지 기본 initial data 입력 완료.
 문제 해결 방법 찾기
 2. 원하는 데이터를 join후 뽑아올수있는 preset 작성 완료. 원하는 데이터를 원하는 방식으로 가져올수있음.
 
+4/19
+Award_winner 쿼리 작성
+insert,delete 등등 은 executeUpdate
+select 는 executeQuery.
 
+
+4/21
+3번문항 rate쿼리 작성 중점은 문제에서 제시하는대로 만들기.
+3.2같은경우 여러개가 검색되어 쿼리로 해결이 안됨.
+자바에서 받아서 반복문 돌리기로 결정.
+AVG rate 가 int로 표기되어 numeric으로 변경
+나머지 전부 구현완료.

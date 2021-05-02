@@ -1,6 +1,6 @@
 
 -- MOVIE DATA 총집 쿼리
-SELECT Movie_id, Movie_name, Actor_name, acting_role,Director_Name, Genre_Name , Publisher, Relate_date
+SELECT Movie_id, Movie_name, Actor_name, acting_role,Director_Name, Genre_Name , Publisher, Relate_date, AVGRate
 FROM Director, Movie, Movie_Actor, Actor, Movie_Genre, Genre
 WHERE Movie.Director_ID = Director.Director_ID
 AND Movie.Movie_ID = Movie_Actor.Movie
@@ -24,3 +24,17 @@ FROM Movie, Movie_Actor, Actor
 WHERE Movie.Movie_ID = Movie_Actor.Movie
 AND Actor.Actor_ID = Movie_Actor.Actor
 AND Movie_ID = 1;
+
+테이블 출력 java
+
+System.out.println("테이블명");
+System.out.println("----------------------------------------------------------");
+System.out.println("column");
+rs = stmt.executeQuery("SELECT * FROM  테이블명");
+while(rs.next()) {
+        	System.out.println(rs.getcoulmn 의 자료형(1) + );
+        }
+
+
+        
+

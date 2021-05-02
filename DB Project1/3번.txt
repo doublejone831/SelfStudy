@@ -1,0 +1,34 @@
+--3.1
+INSERT INTO Customer_Rate (Customer_ID, Movie_ID, Rate)
+	VALUES ((SELECT Customer.Customer_ID
+			FROM Customer
+			WHERE Customer.Customer_Name = 'Ethan'),
+			(SELECT Movie_ID
+			FROM Movie
+			WHERE Movie.Movie_Name = 'Dunkirk'), 5);
+UPDATE Movie 
+SET AVGRate = (SELECT AVG(Rate)
+			   FROM Customer_Rate
+			   WHERE Movie_ID = 5) 
+WHERE Movie_ID = 5;
+
+SELECT Customer_Name, Movie_Name, Rate
+FROM Customer, Customer_Rate, Movie
+WHERE Customer.Customer_ID = Customer_Rate.Customer_ID AND Movie.Movie_ID = Customer_Rate.Movie_ID
+
+SELECT Movie_ID
+FROM Movie, Director
+WHERE Movie.DIrector_ID = Director.Director_ID AND Director.Director_Name = 'Tim Burton'
+--3.2
+INSERT INTO Customer_Rate (Customer_ID, Movie_ID, Rate)
+	VALUES ((SELECT Customer.Customer_ID
+			FROM Customer
+			WHERE Customer.Customer_Name = 'Bell'),
+			i, 5);
+
+UPDATE Movie 
+SET AVGRate = (SELECT AVG(Rate)
+			   FROM Customer_Rate
+			   WHERE Movie_ID = i) 
+WHERE Movie_ID = i;
+--3.3

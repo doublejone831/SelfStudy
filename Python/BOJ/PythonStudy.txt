@@ -1,0 +1,25 @@
+2021/ 05/ 06
+입출력,데이터형
+Python 다중입력 input().split()
+자료형 지정해서 다중입력 map( 자료형(int , longlong, float..), input("프롬프트 출력 텍스트")split(기준))
+데이터 변환시 자료형(변수) ex) A  = 35 (string) -> int(A)
+
+시간정보
+내장모듈 datetime이용
+datetime.timedelta - > 기간을 표현하기위해 사용
+timedelta의 생성자 : 주, 일, 시, 분, 초, 마이크로초, 밀리초
+
+datetime.timezone -> 시간대 표현
+timezone의 인자 : timedelta값
+
+datetime.date -> 날짜를 표현하는데 사용
+date의 생성자 : 연, 월, 일 
+date.today() -> 오늘의 날짜를 반환
+date객체.isoformat() -> YYYY-MM-DD의 형태의 문자열 반환
+date.fromisoformat() -> YYYY-MM-DD형태의 문자열을 date 객체로 변경
+
+date객체.year, month, day ->date객체의 year, month, dat에 접근
+date객체.weekday()
+       .isoweekday() -> 요일 반환 weekday 는 월요일이 0, isoweekday는 월요일이 1
+
+date객체.replace(바꾸고싶은속성 = 값) -> date객체의 연,월일을 새로운 객체를 생성하여 대체.(date객체는 immutable 하기 때문)

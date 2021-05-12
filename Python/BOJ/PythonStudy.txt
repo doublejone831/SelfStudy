@@ -1,7 +1,7 @@
 2021/ 05/ 06
 입출력,데이터형
 Python 다중입력 input().split()
-자료형 지정해서 다중입력 map( 자료형(int , longlong, float..), input("프롬프트 출력 텍스트")split(기준))
+자료형 지정해서 다중입력 map( 자료형(int , longlong, float..), input("프롬프트 출력 텍스트").split(기준))
 데이터 변환시 자료형(변수) ex) A  = 35 (string) -> int(A)
 
 시간정보
@@ -23,3 +23,10 @@ date객체.weekday()
        .isoweekday() -> 요일 반환 weekday 는 월요일이 0, isoweekday는 월요일이 1
 
 date객체.replace(바꾸고싶은속성 = 값) -> date객체의 연,월일을 새로운 객체를 생성하여 대체.(date객체는 immutable 하기 때문)
+
+2021/ 05/ 07
+sys 함수 -> 여러가지 내장기능들
+maxsize -> 정수형중 가장 큰값 만약 범위를 초과하면 자동으로 longlong으로 바뀜
+
+최솟값 = -sys.maxsize -1
+

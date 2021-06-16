@@ -1,101 +1,297 @@
-﻿// DB_project2.cpp : 이 파일에는 'main' 함수가 포함됩니다. 거기서 프로그램 실행이 시작되고 종료됩니다.
-//
-
+﻿/***********************************
+DB_project2.cpp
+12161990 장지원
+************************************/
 #include <iostream>
 #include <fstream>
 #include <vector>
-#include <stack>
+#include <queue>
 #include <string>
 #include <algorithm>
 
 using namespace std;
 
-class Header {
-public:
-    int BlockSize, RootBID, Depth;
-    Header() {};
-    Header(fstream& file, int _headerSize) {
-        char* buffer;
-        file.seekg(0, ios::beg);
-        file.read(buffer, 4);
-        this->BlockSize = (int)buffer;
-        file.read(buffer, 4);
-        this->RootBID = (int)buffer;
-        file.read(buffer, 4);
-        this->Depth = (int)buffer;
-    };
-    
-};
-
 class Node {
 public:
-    pair<int, int>* entry; // 첫번째 key값, 두번째 BID
-    int nextBID;
+    bool IsleafNode;//true=> LeafNode, false => nonleafnode
+    int* BID;// If IsleafNode == true, 0~N-1 => value, N=> next leafNode BID / OR IsleafNode == false, 0~N=> nextlevel BID;        
+    int* key;// key 0~3
     int size;
-    int block;
+    int BlockID;
+    Node(fstream& fs, int _BID, int hSize, int blockSize, bool _isleaf) {
+        
+        BlockID = _BID;
+		size = (blockSize / 4) / 2;
+		key = new int[size];
+		BID = new int[size + 1];
+        fs.seekg(hSize + (_BID - 1) * blockSize);
+        for (int count = 0; count < size; count++) {
+            fs.read((char*)&BID[count], 4);
+            fs.read((char*)&key[count], 4);
+        }
+        fs.read((char*)&BID[4], 4);
+        IsleafNode = _isleaf;
+    }
+
+	Node(int blockSize, int _BID, bool _isleaf) {
+		IsleafNode = _isleaf;
+		size = (blockSize / 4) / 2;
+		BlockID = _BID;
+	}
+
+
+
+    ~Node() {}
+    friend class BPTree;
 };
-
-
-
 
 class BTree {
 public:
-    Header* header;
-    stack<int> _stack;
-
-    BTree(fstream& file, int blockSize) {
-        header = new Header(file, 12);
-        pair<int, int> Root = make_pair(header->RootBID, header->BlockSize);
+	vector<int> trace;
+    int headerSize;
+    struct fileheader {
+        int BlockSize;
+        int RootBID;
+        int Depth;
     };
-    bool insert(int key, int rid) {
+    fileheader header;
+    fstream fs;
+    int lastBID;
+	int entityNum; // BID갯수 = entitynum+1
+	int nodecount;
+    void write_header(int _BlockSize, int _RootBID, int _Depth) {
+        fs.seekg(0, ios::beg);
+        fs.seekp(0, ios::beg);
+        fs.write((char*)&_BlockSize, 4);
+        fs.write((char*)&_RootBID, 4);
+        fs.write((char*)&_Depth, 4);
+    }
 
+    void write_node(Node* node, int HSize) {
+        int BSize = header.BlockSize;
+        fs.seekp(HSize + (node -> BlockID - 1) * BSize);
+        int i;
+        for (i = 0; i < node->size; i++) {
+            fs.write((char*)&node->BID[i], 4);
+            fs.write((char*)&node->key[i], 4);
+        }
+        fs.write((char*)&node->BID, i + 1);
+            
+    }
+
+    BTree(const char* filename) {
+        fs.open(filename, ios::in | ios::out | ios::binary);
     };
-    void print() {
+    BTree(const char* filename, int _Bsize) {
+        fs.open(filename, ios::in | ios::out | ios::binary);
+        header.RootBID = 0;
+        header.BlockSize = _Bsize;
+        header.Depth = 0;
+        lastBID = 0;
+        headerSize = 12;
+		nodecount = 0;
 
+        write_header(header.BlockSize, header.RootBID, header.Depth);
     };
-    // point search
-    int* search(int key) {
 
-    }; 
-    // range search
-    int* search(int startRange, int endRange) {
+    void init() {
+        fs.seekg(0);
+        fs.read((char*)&header.BlockSize, 4);
+        fs.read((char*)&header.RootBID, 4);
+        fs.read((char*)&header.Depth, 4);
+        headerSize = 12;
+		entityNum = (header.BlockSize / 4) / 2;
+    }
 
-    };
+	Node* search(int _key) {
+		Node* Noneleaf;
+		Node* Leaf;
+
+		int cur_node = header.RootBID;
+		trace.push_back(cur_node);
+		int cur_height = 0;
+
+		//Empty Tree인 경우
+		if (header.RootBID == 0) {
+			return NULL;
+		}
+		//Empty Tree가 아닌경우
+		while (cur_height < header.Depth - 1) {
+			Noneleaf = new Node(fs, cur_node, headerSize, header.BlockSize, false);
+			for (int i = 0; i < entityNum - 1; i++) {
+				//  키가 작은경우
+				if (_key < Noneleaf->key[i]) {
+					cur_node = Noneleaf->BID[i];
+					trace.push_back(cur_node);
+					break;
+				}
+				//키가 같은경우
+				if (_key = Noneleaf->key[i]) {
+					cur_node = Noneleaf->BID[i + 1];
+					trace.push_back(cur_node);
+					break;
+				}
+				//마지막까지 탐색에서도 걸러지지 않은 경우
+				if (i == entityNum - 1) {
+					cur_node = Noneleaf->BID[i + 1];
+					trace.push_back(cur_node);
+					break;
+				}
+			}
+			cur_height++;
+		}
+		Leaf = new Node(fs, cur_node, headerSize, header.BlockSize, true);
+		return Leaf;
+	}
+
+	bool insert(int key, int ID) {
+		init();
+		fs.seekg(-1, ios::end);
+		lastBID = fs.tellg() / header.BlockSize;
+
+		//Empty tree인경우
+		if (header.RootBID == 0) {
+			header.RootBID = 1;
+			header.Depth++;
+			write_header(header.BlockSize, header.RootBID, header.Depth);
+			for (int count = 0; count < entityNum; count++) {
+				fs.write((char*)&key, 4);
+				fs.write((char*)&ID, 4);
+				key = 0;
+				ID = 0;
+			}
+			fs.write("\0", 4);
+		}
+		// Empty tree가 아닌경우
+		else {
+
+		}
+
+	}
+
+	//BFS로 순회하면 레벨별로 출력
+	/*
+	void print(fstream& os) {
+		init();
+
+		Node* node = new Node(fs, header.RootBID, headerSize, header.BlockSize, false);
+		Node* temp;
+		Node * leafNode;
+
+		bool* visit = new bool[nodecount];
+		queue<Node*> q;
+		q.push(node);
+
+		while (!q.empty()) {
+			Node* x = q.front();
+			q.pop();
+			printNode(os, x);
+			for (int i = 0; i < ((x->size / 4) / 2) + 1; i++) {
+				if (!visit[i]) {
+					q.push
+				}
+			}
+		}
+
+	}
+
+	void printNode(fstream& os, Node* n) {
+		for (int i = 0; i < entityNum; i++) {
+			os << n->key[i] << ",";
+		}
+	}
+	*/
 };
 
+int main(int argc, char* argv[]) {
+	char command = argv[1][0];
+	char* binFile = argv[2];
+	int initSize;
+	int key, ID;
+	int rangeStart, rangeEnd;
+	BTree* myBPtree;
+	fstream fs;
+	fstream input;
+	fstream output;
 
-int main(int argc, char* argv[])
-{
-    char command = argv[1][0];
-    const char* name = "btree.bin";
-   
-    fstream files(name, ios::in | ios::out | ios::binary);
-    
-    if (!files.is_open()) {
-        cerr << "Failed to open file" << endl;
-        return 0;
-    };
+	string str;
+	string strTmp;
 
-    BTree* myBtree = new BTree(files, 2);
+	vector<pair<int, int>> entryVec;
 
-    switch (command)
-    {
-    case 'c':
-        // create index file
-        break;
-    case 'i':
-        // insert records from [records data file], ex) records.txt
-        break;
-    case 's':
-        // search keys in [input file] and print results to [output file]
-        break;
-    case 'r':
-        // search keys in [input file] and print results to [output file]
-        break;
-    case 'p':
-        // print B+-Tree structure to [output file]
-        break;
-    }
+	switch (command) {
+	case 'c':
+		// create index file
+		initSize = atoi(argv[3]);
+		myBPtree = new BTree(binFile, initSize);
+		break;
+	case 'i':
+		// insert records from [records data file], ex) records.txt
+		myBPtree = new BTree(binFile);
+		input.open(argv[3], ios::in);
+		while (getline(input, str)) {
+			strTmp = (str.substr(0, str.find_first_of(",")));
+			str = str.substr(strTmp.size() + 1, str.size());
+			key = atoi(strTmp.c_str());
+			ID = atoi(str.c_str());
+
+			myBPtree->insert(key, ID);
+		}
+		fs.close();
+		delete myBPtree;
+		break;
+	case 's':
+		// search keys in [input file] and print results to [output file]
+		myBPtree = new BTree(binFile);
+		myBPtree->init();
+		input.open(argv[3], ios::in);
+		output.open(argv[4], ios::out);
+		while (getline(input, str)) {
+			key = atoi(str.c_str());
+			output << myBPtree->search(key) << "\n";
+		}
+		output.close();
+		fs.close();
+		delete myBPtree;
+		break;
+	case 'r':
+		// search keys in [input file] and print results to [output file]
+		myBPtree = new BTree(binFile);
+		myBPtree->init();
+		input.open(argv[3], ios::in);
+		output.open(argv[4], ios::out);
+		while (getline(input, str)) {
+			strTmp = (str.substr(0, str.find_first_of(",")));
+			str = str.substr(strTmp.size() + 1, str.size());
+			rangeStart = atoi(strTmp.c_str());
+			rangeEnd = atoi(str.c_str());
+
+			entryVec = myBPtree->search(rangeStart, rangeEnd);
+			for (vector<pair<int, int>>::iterator it = entryVec.begin(); it != entryVec.end(); it++) {
+				output << (*it).first << "," << (*it).second << "\t";
+			}
+			output << "\n";
+		}
+		output.close();
+		input.close();
+		fs.close();
+		delete myBPtree;
+
+		break;
+	case 'p':
+		// print B+-Tree structure to [output file]
+		myBPtree = new BTree(binFile);
+		output.open(argv[3], ios::out);
+		myBPtree->print(output);
+
+		output.close();
+		fs.close();
+		delete myBPtree;
+
+		break;
+	}
+	return 0;
+}
 
 // 프로그램 실행: <Ctrl+F5> 또는 [디버그] > [디버깅하지 않고 시작] 메뉴
 // 프로그램 디버그: <F5> 키 또는 [디버그] > [디버깅 시작] 메뉴

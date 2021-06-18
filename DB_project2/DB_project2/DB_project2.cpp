@@ -11,25 +11,44 @@ DB_project2.cpp
 
 using namespace std;
 
+struct entity {
+	int key;
+	int ID;
+};//node entity
+
+struct fileheader {
+	int BlockSize;
+	int RootBID;
+	int Depth;
+}; //BPtree header
+
+bool compare(entity e1, entity e2) {
+	return e1.key < e2.key;
+}
+
 class Node {
 public:
     bool IsleafNode;//true=> LeafNode, false => nonleafnode
-    int* BID;// If IsleafNode == true, 0~N-1 => value, N=> next leafNode BID / OR IsleafNode == false, 0~N=> nextlevel BID;        
-    int* key;// key 0~3
+	entity* entities;
+	int BID;// if LeafNode => NextLeafNode's BID if NoneLeafNode => Node that has smaller key than smallest key in Noneleafnode
     int size;
-    int BlockID;
+    int BlockID;//BID of this block
     Node(fstream& fs, int _BID, int hSize, int blockSize, bool _isleaf) {
         
         BlockID = _BID;
 		size = (blockSize / 4) / 2;
-		key = new int[size];
-		BID = new int[size + 1];
+		entities = new entity[size];
         fs.seekg(hSize + (_BID - 1) * blockSize);
+		if (_isleaf == false) {
+			fs.read((char*)&BID, 4);
+		}
         for (int count = 0; count < size; count++) {
-            fs.read((char*)&BID[count], 4);
-            fs.read((char*)&key[count], 4);
+            fs.read((char*)&entities[count].ID, 4);
+            fs.read((char*)&entities[count].key, 4);
         }
-        fs.read((char*)&BID[4], 4);
+		if (_isleaf == true) {
+			fs.read((char*)&BID, 4);
+		}
         IsleafNode = _isleaf;
     }
 
@@ -38,27 +57,21 @@ public:
 		size = (blockSize / 4) / 2;
 		BlockID = _BID;
 	}
-
-
-
     ~Node() {}
     friend class BPTree;
 };
 
+
+
 class BTree {
 public:
-	vector<int> trace;
-    int headerSize;
-    struct fileheader {
-        int BlockSize;
-        int RootBID;
-        int Depth;
-    };
-    fileheader header;
-    fstream fs;
-    int lastBID;
-	int entityNum; // BID갯수 = entitynum+1
-	int nodecount;
+	vector<int> trace;// 노드따라갈시 밟은 경로 노드 저장
+    int headerSize; // header의 크기
+    fileheader header; // Btree header
+    fstream fs; // 파일입출력
+    int Nodecount; // 트리안의 노드의 총 갯수
+	int EntrySize; // Node당 entry 갯수
+	
     void write_header(int _BlockSize, int _RootBID, int _Depth) {
         fs.seekg(0, ios::beg);
         fs.seekp(0, ios::beg);
@@ -71,10 +84,16 @@ public:
         int BSize = header.BlockSize;
         fs.seekp(HSize + (node -> BlockID - 1) * BSize);
         int i;
+		if (node->IsleafNode == false) {
+			fs.write((char*)&(node->BID), 4);
+		}
         for (i = 0; i < node->size; i++) {
-            fs.write((char*)&node->BID[i], 4);
-            fs.write((char*)&node->key[i], 4);
+            fs.write((char*)&node->entities[i].key, 4);
+            fs.write((char*)&node->entities[i].ID, 4);
         }
+		if (node->IsleafNode == true) {
+			fs.write((char*)&(node->BID), 4);
+		}
         fs.write((char*)&node->BID, i + 1);
             
     }
@@ -83,78 +102,110 @@ public:
         fs.open(filename, ios::in | ios::out | ios::binary);
     };
     BTree(const char* filename, int _Bsize) {
+		//generate file
+		ofstream os (filename, ios::out | ios::binary);
+		if (os.fail()) {
+			cerr << "The file \"" << filename << "\" creation fail." << endl;
+			exit(1);
+		}
+
+		os.close();
+
+		//open file to read and write
         fs.open(filename, ios::in | ios::out | ios::binary);
+		
+		if (fs.fail()) {
+			cerr << "The file \"" << filename << "\" open failed." << endl;
+			exit(1);
+		}
+
         header.RootBID = 0;
         header.BlockSize = _Bsize;
         header.Depth = 0;
-        lastBID = 0;
+        Nodecount = 0;
         headerSize = 12;
-		nodecount = 0;
+		EntrySize = (header.BlockSize / 4) / 2;
 
         write_header(header.BlockSize, header.RootBID, header.Depth);
     };
 
+	//initialize header & trace 
     void init() {
         fs.seekg(0);
         fs.read((char*)&header.BlockSize, 4);
         fs.read((char*)&header.RootBID, 4);
         fs.read((char*)&header.Depth, 4);
         headerSize = 12;
-		entityNum = (header.BlockSize / 4) / 2;
+		EntrySize = (header.BlockSize / 4) / 2;
+		
     }
 
-	Node* search(int _key) {
+	
+	//find Node that key can fit in 
+	Node* Node_search(int _key) {
+		trace.clear();
 		Node* Noneleaf;
 		Node* Leaf;
 
 		int cur_node = header.RootBID;
+		int height = header.Depth;
 		trace.push_back(cur_node);
-		int cur_height = 0;
 
-		//Empty Tree인 경우
+
+		//Empty Tree
 		if (header.RootBID == 0) {
 			return NULL;
 		}
-		//Empty Tree가 아닌경우
-		while (cur_height < header.Depth - 1) {
+		//Not an Empty Tree, leaf Node's height = 0.
+		while (height > 1) {
 			Noneleaf = new Node(fs, cur_node, headerSize, header.BlockSize, false);
-			for (int i = 0; i < entityNum - 1; i++) {
-				//  키가 작은경우
-				if (_key < Noneleaf->key[i]) {
-					cur_node = Noneleaf->BID[i];
+			for (int i = 0; i < EntrySize - 1; i++) {
+				//Bigger than biggest
+				if (Noneleaf->entities[i].key == 0) {
+					cur_node = Noneleaf->entities[i].ID;
 					trace.push_back(cur_node);
 					break;
 				}
-				//키가 같은경우
-				if (_key = Noneleaf->key[i]) {
-					cur_node = Noneleaf->BID[i + 1];
+				//  target_key < key 
+				if (_key < Noneleaf->entities[i].key) {
+					if (i == 0) {
+						cur_node = Noneleaf->BID;
+						trace.push_back(cur_node);
+						break;
+					}
+					else {
+						cur_node = Noneleaf->entities[i-1].ID;
+						trace.push_back(cur_node);
+						break;
+					}
+				}
+				//target_key = key
+				if (_key = Noneleaf->entities[i].key) {
+					cur_node = Noneleaf->entities[i].ID;
 					trace.push_back(cur_node);
 					break;
 				}
-				//마지막까지 탐색에서도 걸러지지 않은 경우
-				if (i == entityNum - 1) {
-					cur_node = Noneleaf->BID[i + 1];
-					trace.push_back(cur_node);
-					break;
-				}
+				height--;
 			}
-			cur_height++;
 		}
 		Leaf = new Node(fs, cur_node, headerSize, header.BlockSize, true);
 		return Leaf;
 	}
+	// LN = leafNode
 
+
+	
 	bool insert(int key, int ID) {
+		trace.clear();
 		init();
 		fs.seekg(-1, ios::end);
-		lastBID = fs.tellg() / header.BlockSize;
 
-		//Empty tree인경우
+		//Empty tree
 		if (header.RootBID == 0) {
 			header.RootBID = 1;
 			header.Depth++;
 			write_header(header.BlockSize, header.RootBID, header.Depth);
-			for (int count = 0; count < entityNum; count++) {
+			for (int count = 0; count < EntrySize; count++) {
 				fs.write((char*)&key, 4);
 				fs.write((char*)&ID, 4);
 				key = 0;
@@ -162,45 +213,215 @@ public:
 			}
 			fs.write("\0", 4);
 		}
-		// Empty tree가 아닌경우
+		// Not an Empty tree
 		else {
+			Node* target = Node_search(key);//go until leafNode
+			int index;
 
-		}
-
-	}
-
-	//BFS로 순회하면 레벨별로 출력
-	/*
-	void print(fstream& os) {
-		init();
-
-		Node* node = new Node(fs, header.RootBID, headerSize, header.BlockSize, false);
-		Node* temp;
-		Node * leafNode;
-
-		bool* visit = new bool[nodecount];
-		queue<Node*> q;
-		q.push(node);
-
-		while (!q.empty()) {
-			Node* x = q.front();
-			q.pop();
-			printNode(os, x);
-			for (int i = 0; i < ((x->size / 4) / 2) + 1; i++) {
-				if (!visit[i]) {
-					q.push
+			//find empty slot in Node
+			for (index = 0; index < EntrySize; index++) {
+				if (target->entities[index].key == 0) {
+					break;
 				}
 			}
-		}
+			target->entities[index].ID = ID;
+			target->entities[index].key = key;
+			sort(target->entities, target->entities + index + 1, compare);
 
+			//if leaf node is full
+			if (index == EntrySize) {
+
+				//split
+				Node* NewNode = new Node(header.BlockSize, ++Nodecount, true);
+				int MovingEntries = (EntrySize + 1) / 2;
+				NewNode->entities = new entity[EntrySize];
+				for (int i = 0; i < MovingEntries; i++) {
+					NewNode->entities[i] = target->entities[(EntrySize / 2 + 1) + index];
+					NewNode->entities[(EntrySize / 2 + 1) + index].ID = 0;
+					NewNode->entities[(EntrySize / 2 + 1) + index].key = 0;
+				}
+				NewNode->BID = target->BID;
+				target->BID = NewNode->BlockID;
+				trace.pop_back();
+				if (!trace.empty()) {
+					Node* temp = new Node(fs, trace.back(), headerSize, header.BlockSize, false); // Get ParentNode
+					for (int i = 0; i < EntrySize; i++) {
+						if (temp->entities[i].key == 0) {
+							break;
+						}
+						if (NewNode->entities[0].key < temp->entities[i].key) {
+							break;
+						}
+					}
+				}
+				write_node(target, headerSize);
+				write_node(NewNode, headerSize);
+
+				//root 뿐인 트리일경우
+				if (header.Depth == 1) {
+					Node* NLN = new Node(header.BlockSize, ++Nodecount, false);
+					NLN->entities = new entity[EntrySize];
+					NLN->BID = target->BlockID;
+					NLN->entities[0].key = NewNode->entities[0].key;
+					NLN->entities[0].ID = NewNode->BlockID;
+					header.RootBID = NLN->BlockID;
+					header.Depth++;
+					write_node(NLN, headerSize);
+
+				}
+				else {
+					Node* NLN = new Node(fs, trace.back(), headerSize, header.BlockSize, false);
+
+					int i;
+					for (i = 0; i < EntrySize; i++) {
+						if (NLN->entities[i].key == 0) {
+							NLN->entities[i].key = NewNode->entities[0].key;
+							NLN->entities[i].ID = NewNode->BlockID;
+							write_node(NLN, headerSize);
+							break;
+						}
+					}
+					if (i == EntrySize) {
+						NLN->entities[i].key = NewNode->entities[0].key;
+						NLN->entities[i].ID = NewNode->BlockID;
+					}
+					sort(NLN->entities, NLN->entities + i + 1, compare);
+
+					//부모노드가 꽉찬 경우
+					if (i == EntrySize) {
+						Node* Extra = new Node(header.BlockSize, 0, false);
+						Node* NN = new Node(header.BlockSize, 0, false);
+						entity temp;
+						temp.ID = 0;
+						temp.key = 0;
+						while (true) {
+							if (temp.key != 0) {
+								trace.pop_back();
+								if (trace.empty()) {
+									Node* LN = new Node(fs, NLN->entities[EntrySize / 2 - 1].ID, headerSize, header.BlockSize, true);
+									LN->BID = NN->BID;
+									write_node(LN, headerSize);
+									Node* ancester = new Node(header.BlockSize, ++Nodecount, false);
+									ancester->BID = Extra->BlockID;
+									ancester->entities[0] = temp;
+									header.Depth++;
+									header.RootBID = ancester->BlockID;
+									write_node(ancester, headerSize);
+									break;
+								}
+								else {
+									NN = new Node(fs, trace.back(), headerSize, header.BlockSize, false);
+									i = 0;
+									for (; i < NN->size; i++) {
+										if (NN->entities[i].key == 0) {
+											NN->entities[i] = temp;
+											break;
+										}
+									}
+									sort(NN->entities, NN->entities + i, compare);
+									if (i < EntrySize) {
+										write_node(NN, headerSize);
+										break;
+									}
+								}
+							}
+							NN = new Node(header.BlockSize, ++Nodecount, false);
+							NN->entities = new entity[EntrySize];
+							int m = (EntrySize - 1) / 2;
+							temp = NLN->entities[EntrySize / 2];
+							NLN->entities[EntrySize / 2].ID = 0;
+							NLN->entities[EntrySize / 2].key = 0;
+							for (i = 0; i <= m; i++) {
+								NN->entities[i] = NLN->entities[EntrySize / 2 + i + 1];
+								NLN->entities[EntrySize / 2 + i + 1].key = 0;
+								NLN->entities[EntrySize / 2 + i + 1].key = 0;
+							}
+							NN->BID = temp.ID;
+							temp.ID = NN->BID;
+							write_node(NLN, headerSize);
+							write_node(NN, headerSize);
+							Extra = NLN;
+						}
+					}
+					else {
+						write_node(NLN, headerSize);
+					}
+				}
+				write_header(header.BlockSize, header.RootBID, header.Depth);
+			}
+			else {
+				write_node(target, headerSize);
+			}
+		}
+		return true;
+
+	}
+	
+	//BFS
+	void print(fstream& os) {
+		init();
+		bool* visit = new bool[Nodecount] {false};
+		queue<int> q;
+		q.push(header.RootBID);
+		int cur = 0; // 0부터 시작하는 트리노드
+		os << "\n<0>\n";
+		Node* x = new Node(fs, q.front(), headerSize, header.BlockSize, false);
+		q.pop();
+		printNode(os, x);	
+		for (int i = 0; i < EntrySize; i++) {
+			if (x->entities[i].key == 0) {
+				break;
+			}
+			if (!visit[cur]) {
+				q.push(x->entities[i].ID);
+				cur++;
+			}				
+		}
+		os << "\n<1>\n";
+		while (!q.empty()) {
+			x = new Node(fs, q.front(), headerSize, header.BlockSize, false);
+			q.pop();
+			printNode(os, x);
+		}
 	}
 
 	void printNode(fstream& os, Node* n) {
-		for (int i = 0; i < entityNum; i++) {
-			os << n->key[i] << ",";
+		for (int i = 0; i < EntrySize; i++) {
+			if (n->entities[i].key == 0) break;
+			os << n->entities[i].key << ",";
 		}
 	}
-	*/
+
+	int search(int key) {
+		Node* Leaf = Node_search(key);
+		for (int i = 0; i < Leaf->size; i++) {
+			if (Leaf->entities[i].key == key) {
+				return Leaf->entities[i].ID;
+			}
+		}
+		return 0;
+	}
+
+	vector<entity> search(int start, int end) {
+		vector<entity> val;
+		int cur = start;
+		Node* N = Node_search(start);
+		for (int i= 0 ; cur <= end; i++) {
+			if (i == EntrySize || N->entities[i].key == 0) {
+				i = -1;
+				N = new Node(fs, N->BID, headerSize, header.BlockSize , true);
+				continue;
+			}
+			if (N->entities[i].key < cur) {
+				continue;
+			}
+			cur = N->entities[i].key;
+			if (cur <= end) {
+				val.push_back(N->entities[i]);
+			}
+		}
+		return val;
+	}
 };
 
 int main(int argc, char* argv[]) {
@@ -217,7 +438,7 @@ int main(int argc, char* argv[]) {
 	string str;
 	string strTmp;
 
-	vector<pair<int, int>> entryVec;
+	vector<entity> Vec;
 
 	switch (command) {
 	case 'c':
@@ -240,20 +461,6 @@ int main(int argc, char* argv[]) {
 		fs.close();
 		delete myBPtree;
 		break;
-	case 's':
-		// search keys in [input file] and print results to [output file]
-		myBPtree = new BTree(binFile);
-		myBPtree->init();
-		input.open(argv[3], ios::in);
-		output.open(argv[4], ios::out);
-		while (getline(input, str)) {
-			key = atoi(str.c_str());
-			output << myBPtree->search(key) << "\n";
-		}
-		output.close();
-		fs.close();
-		delete myBPtree;
-		break;
 	case 'r':
 		// search keys in [input file] and print results to [output file]
 		myBPtree = new BTree(binFile);
@@ -266,9 +473,9 @@ int main(int argc, char* argv[]) {
 			rangeStart = atoi(strTmp.c_str());
 			rangeEnd = atoi(str.c_str());
 
-			entryVec = myBPtree->search(rangeStart, rangeEnd);
-			for (vector<pair<int, int>>::iterator it = entryVec.begin(); it != entryVec.end(); it++) {
-				output << (*it).first << "," << (*it).second << "\t";
+			Vec = myBPtree->search(rangeStart, rangeEnd);
+			for (vector<entity>::iterator it = Vec.begin(); it != Vec.end(); it++) {
+				output << (*it).key << "," << (*it).ID << "\t";
 			}
 			output << "\n";
 		}
